@@ -6,6 +6,7 @@ mod grid_coords;
 use crate::grid::Grid;
 use crate::dfs::DFSMaze;
 use crate::grid_coords::GRID_SIZE;
+use crate::direction::Direction;
 
 fn main() {
     let mut grid = Grid::new();
@@ -13,6 +14,23 @@ fn main() {
 
     let mut maze_gen = DFSMaze::new();
     maze_gen.maze_fill(&mut grid);
+
+    grid.mark_exit(Direction::Down, 3);
+    grid.mark_exit(Direction::Up, 5);
+
+    println!("{:?}", grid);
+
+    let mut child_grid = Grid::new();
+    // TODO: propagate boundary constraints
+    //child_grid.mark_boundaries();
+    grid.propagate_interior(&mut child_grid, 0..4, 0..4);
+    
+    
+    maze_gen.clear();
+    maze_gen.maze_fill(&mut child_grid);
+
+    println!("\n{:?}", child_grid);
+    
 
     image::save_buffer(
         "output/grid.png", 
@@ -30,5 +48,4 @@ fn main() {
         image::ColorType::Rgb8
     ).unwrap();
 
-    println!("{:?}", grid);
 }

@@ -20,6 +20,12 @@ impl DFSMaze {
             rng: rand::thread_rng()
         }
     }
+
+    pub fn clear(&mut self) {
+        self.visited.clear();
+        self.stack.clear();
+    }
+
     pub fn make_maze(&mut self, grid: &mut Grid, start_cell: GridCoords) {
         self.stack.push(start_cell);
 
@@ -29,7 +35,7 @@ impl DFSMaze {
 
             let unvisited_neighbors: Vec<GridCoords> = current.get_neighbors()
                 .into_iter()
-                .filter(|x| !self.visited.contains(&x))
+                .filter(|x| !self.visited.contains(x) && grid.can_connect(current, *x))
                 .collect();
 
             // Out of options so backtrack

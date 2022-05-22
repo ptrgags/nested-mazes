@@ -1,9 +1,14 @@
+use std::ops::Range;
 use std::fmt::{Debug, Formatter, Result};
+
+use rand::Rng;
+use rand::rngs::ThreadRng;
 
 use crate::grid_coords::{GridCoords, GRID_SIZE};
 use crate::direction::Direction;
 
-const CELL_COUNT: usize = GRID_SIZE as usize * GRID_SIZE as usize;
+const CELL_COUNT: usize = GRID_SIZE * GRID_SIZE;
+const HALF_GRID_SIZE: usize = GRID_SIZE / 2;
 
 // RGB image
 const IMAGE_SIZE: usize = CELL_COUNT * 3;
@@ -14,6 +19,7 @@ pub struct Connection {
     blocked: bool,
     is_solution_connection: bool,
     is_maze_exit: bool,
+    split_bits: u16
 }
 
 impl Connection {
@@ -22,7 +28,8 @@ impl Connection {
             connected: false,
             blocked: false,
             is_solution_connection: false,
-            is_maze_exit: false
+            is_maze_exit: false,
+            split_bits: 0
         }
     }
 }
@@ -72,14 +79,16 @@ impl Cell {
 
 
 pub struct Grid {
-    /// Cells, stored in row-major fashion
+    /// Cells, stored in row-major fashion, but the rows are y-up
     cells: [Cell; CELL_COUNT],
+    rng: ThreadRng
 }
 
 impl Grid {
     pub fn new() -> Self {
         Self {
-            cells: [Cell::new(); CELL_COUNT]
+            cells: [Cell::new(); CELL_COUNT],
+            rng: rand::thread_rng()
         }
     }
 
@@ -91,10 +100,21 @@ impl Grid {
         &mut self.cells[coords.to_index()]
     }
 
+    pub fn can_connect(&mut self, a: GridCoords, b:GridCoords) -> bool {
+        let direction = match GridCoords::get_direction(a, b) {
+            Some(dir) => dir,
+            None => panic!("can_connect can only be called on adjacent coordinates")
+        };
+        let opposite_dir = direction.get_opposite();
+
+        let connection = &self.get_cell(a).connections[direction.to_index()];
+        !connection.blocked
+    }
+
     pub fn connect(&mut self, a: GridCoords, b: GridCoords) {
         let direction = match GridCoords::get_direction(a, b) {
             Some(dir) => dir,
-            None => panic!("Connect can only be called on adjacent coordinates")
+            None => panic!("connect can only be called on adjacent coordinates")
         };
         let opposite_dir = direction.get_opposite();
 
@@ -104,10 +124,10 @@ impl Grid {
 
     pub fn to_image_bytes(&self) -> [u8; IMAGE_SIZE] {
         let mut result = [0; IMAGE_SIZE];
-        for i in 0..GRID_SIZE {
-            let row = (GRID_SIZE - 1) - i;
-            for j in 0..GRID_SIZE {
-                let index = row * GRID_SIZE + j;
+        for row in 0..GRID_SIZE {
+            let y = (GRID_SIZE - 1) - row;
+            for x in 0..GRID_SIZE {
+                let index = y * GRID_SIZE + x;
                 let cell = &self.cells[index];
                 // Red channel is the connection bits
                 result[3 * index] = cell.get_connection_bits();
@@ -133,13 +153,13 @@ impl Grid {
 
     pub fn mark_boundaries(&mut self) {
         for i in 0..GRID_SIZE {
-            // top boundary
+            // bottom boundary
             self.cells[i]
-                .connections[Direction::Up.to_index()].blocked = true;
+                .connections[Direction::Down.to_index()].blocked = true;
 
             // bottom boundary
             self.cells[(GRID_SIZE - 1) * GRID_SIZE + i]
-                .connections[Direction::Down.to_index()].blocked = true;
+                .connections[Direction::Up.to_index()].blocked = true;
 
             // left boundary
             self.cells[i * GRID_SIZE]
@@ -148,6 +168,123 @@ impl Grid {
             // right boundary
             self.cells[i * GRID_SIZE + (GRID_SIZE - 1)]
                 .connections[Direction::Right.to_index()].blocked = true;
+        }
+    }
+
+    pub fn mark_exit(&mut self, direction: Direction, index: usize) {
+        let (x, y) = match direction {
+            Direction::Right => (GRID_SIZE - 1, index),
+            Direction::Left => (0, index),
+            Direction::Up => (index, GRID_SIZE - 1),
+            Direction::Down => (index, 0)
+        };
+
+        let cell = &mut self.cells[y * GRID_SIZE + x];
+        let connection = &mut cell.connections[direction.to_index()];
+
+        // Make a connection that leads "outside" the maze
+        connection.blocked = false;
+        connection.connected = true;
+        connection.is_maze_exit = true;
+        connection.is_solution_connection = true;
+        // Assign some random bits so when we subdivide we know where exactly
+        // to put the exit as we zoom in.
+        connection.split_bits = self.rng.gen::<u16>();
+    }
+
+    pub fn get_horizontal_seam(
+        &self, 
+        y: usize, 
+        direction: Direction,
+    ) -> [Connection; GRID_SIZE] {
+        let mut result = [Connection::new(); GRID_SIZE];
+        for x in 0..GRID_SIZE {
+            result[x] = self.cells[y * GRID_SIZE + x]
+                .connections[direction.to_index()];
+        }
+
+        result
+    }
+
+    pub fn get_vertical_seam(
+        &self, 
+        x: usize,
+        direction: Direction,
+    ) -> [Connection; GRID_SIZE] {
+        let mut result = [Connection::new(); GRID_SIZE];
+        for y in 0..GRID_SIZE {
+            result[y] = self.cells[y * GRID_SIZE + x]
+                .connections[direction.to_index()];
+        }
+
+        result
+    }
+
+    pub fn propagate_interior(
+        &mut self,
+        child: &mut Self,
+        x_range: Range<usize>,
+        y_range: Range<usize>
+    ) {
+        // propagate vertical walls on the right edge of cells
+        const RIGHT_INDEX: usize = Direction::Right.to_index();
+        const LEFT_INDEX: usize = Direction::Left.to_index();
+        for y in y_range.clone() {
+            for x in x_range.start..(x_range.end - 1) {
+                let parent_cell = &self.cells[y * GRID_SIZE + x];
+                let parent_right = 
+                    &parent_cell.connections[RIGHT_INDEX];
+
+                // If there's no wall, skip
+                if parent_right.connected {
+                    continue;
+                }
+
+                // At the next level of detail, one wall becomes two adjacent
+                // walls. Both need to be marked as blocked
+                let child_x = 2 * x + 1;
+                let child_y = 2 * y;
+                child.cells[child_y * GRID_SIZE + child_x]
+                    .connections[RIGHT_INDEX].blocked = true;
+                child.cells[(child_y + 1) * GRID_SIZE + child_x]
+                    .connections[RIGHT_INDEX].blocked = true;
+
+                // Also mark the opposite side of the connection
+                child.cells[child_y * GRID_SIZE + (child_x + 1)]
+                    .connections[LEFT_INDEX].blocked = true;
+                child.cells[(child_y + 1) * GRID_SIZE + (child_x + 1)]
+                    .connections[LEFT_INDEX].blocked = true;
+            }
+        }
+
+        // Same thing but for horizontal walls
+        const UP_INDEX: usize = Direction::Up.to_index();
+        for y in y_range.start..(y_range.end - 1) {
+            for x in x_range.clone() {
+                let parent_cell = &self.cells[y * GRID_SIZE + x];
+                let parent_up = 
+                    &parent_cell.connections[UP_INDEX];
+
+                // If there's no wall, skip
+                if parent_up.connected {
+                    continue;
+                }
+
+                // At the next level of detail, one wall becomes two adjacent
+                // walls. Both need to be marked as blocked
+                let child_x = 2 * x;
+                let child_y = 2 * y + y;
+                child.cells[child_y * GRID_SIZE + child_x]
+                    .connections[UP_INDEX].blocked = true;
+                child.cells[child_y * GRID_SIZE + (child_x + 1)]
+                    .connections[UP_INDEX].blocked = true;
+
+                // Also mark the opposite side of the connection
+                child.cells[(child_y + 1) * GRID_SIZE + child_x]
+                    .connections[UP_INDEX].blocked = true;
+                child.cells[(child_y + 1) * GRID_SIZE + (child_x + 1)]
+                    .connections[UP_INDEX].blocked = true;
+            }
         }
     }
 }

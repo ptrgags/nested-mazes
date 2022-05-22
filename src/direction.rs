@@ -7,7 +7,7 @@ pub enum Direction {
 }
 
 impl Direction {
-    pub fn to_index(&self) -> usize {
+    pub const fn to_index(&self) -> usize {
         *self as usize
     }
 
