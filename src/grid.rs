@@ -242,8 +242,8 @@ impl Grid {
 
                 // At the next level of detail, one wall becomes two adjacent
                 // walls. Both need to be marked as blocked
-                let child_x = 2 * x + 1;
-                let child_y = 2 * y;
+                let child_x = 2 * (x % 4) + 1;
+                let child_y = 2 * (y % 4);
                 child.cells[child_y * GRID_SIZE + child_x]
                     .connections[RIGHT_INDEX].blocked = true;
                 child.cells[(child_y + 1) * GRID_SIZE + child_x]
@@ -259,6 +259,7 @@ impl Grid {
 
         // Same thing but for horizontal walls
         const UP_INDEX: usize = Direction::Up.to_index();
+        const DOWN_INDEX: usize = Direction::Down.to_index();
         for y in y_range.start..(y_range.end - 1) {
             for x in x_range.clone() {
                 let parent_cell = &self.cells[y * GRID_SIZE + x];
@@ -272,8 +273,8 @@ impl Grid {
 
                 // At the next level of detail, one wall becomes two adjacent
                 // walls. Both need to be marked as blocked
-                let child_x = 2 * x;
-                let child_y = 2 * y + y;
+                let child_x = 2 * (x % 4);
+                let child_y = 2 * (y % 4) + 1;
                 child.cells[child_y * GRID_SIZE + child_x]
                     .connections[UP_INDEX].blocked = true;
                 child.cells[child_y * GRID_SIZE + (child_x + 1)]
@@ -281,9 +282,9 @@ impl Grid {
 
                 // Also mark the opposite side of the connection
                 child.cells[(child_y + 1) * GRID_SIZE + child_x]
-                    .connections[UP_INDEX].blocked = true;
+                    .connections[DOWN_INDEX].blocked = true;
                 child.cells[(child_y + 1) * GRID_SIZE + (child_x + 1)]
-                    .connections[UP_INDEX].blocked = true;
+                    .connections[DOWN_INDEX].blocked = true;
             }
         }
     }

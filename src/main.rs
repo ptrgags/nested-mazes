@@ -20,17 +20,27 @@ fn main() {
 
     println!("{:?}", grid);
 
-    let mut child_grid = Grid::new();
+    let mut sw = Grid::new();
+    let mut se = Grid::new();
+    let mut nw = Grid::new();
+    let mut ne = Grid::new();
     // TODO: propagate boundary constraints
     //child_grid.mark_boundaries();
-    grid.propagate_interior(&mut child_grid, 0..4, 0..4);
-    
-    
-    maze_gen.clear();
-    maze_gen.maze_fill(&mut child_grid);
+    grid.propagate_interior(&mut sw, 0..4, 0..4);
+    grid.propagate_interior(&mut se, 4..8, 0..4);
+    grid.propagate_interior(&mut nw, 0..4, 4..8);
+    grid.propagate_interior(&mut ne, 4..8, 4..8);
 
-    println!("\n{:?}", child_grid);
-    
+    maze_gen.clear();
+    maze_gen.maze_fill(&mut sw);
+    maze_gen.clear();
+    maze_gen.maze_fill(&mut se);
+    maze_gen.clear();
+    maze_gen.maze_fill(&mut nw);
+    maze_gen.clear();
+    maze_gen.maze_fill(&mut ne);
+
+    println!("{:?}{:?}", nw, sw);
 
     image::save_buffer(
         "output/grid.png", 

@@ -24,17 +24,17 @@ impl GridCoords {
             });
         }
 
-        if self.x < GRID_SIZE - 1 {
-            result.push(Self {
-                x: self.x + 1,
-                y: self.y
-            });
-        }
-
         if self.y > 0 {
             result.push(Self {
                 x: self.x,
                 y: self.y - 1
+            });
+        }
+
+        if self.x < GRID_SIZE - 1 {
+            result.push(Self {
+                x: self.x + 1,
+                y: self.y
             });
         }
 
