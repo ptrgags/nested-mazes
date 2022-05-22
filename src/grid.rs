@@ -8,7 +8,7 @@ use crate::grid_coords::{GridCoords, GRID_SIZE};
 use crate::direction::Direction;
 
 const CELL_COUNT: usize = GRID_SIZE * GRID_SIZE;
-const HALF_GRID_SIZE: usize = GRID_SIZE / 2;
+
 
 // RGB image
 const IMAGE_SIZE: usize = CELL_COUNT * 3;
@@ -220,8 +220,18 @@ impl Grid {
         result
     }
 
-    pub fn propagate_interior(
+    pub fn set_boundary(
         &mut self,
+        right: &[Connection],
+        top: &[Connection],
+        left: &[Connection],
+        bottom: &[Connection],
+    ) {
+        // TODO: implement me!
+    }
+
+    pub fn propagate_interior(
+        &self,
         child: &mut Self,
         x_range: Range<usize>,
         y_range: Range<usize>

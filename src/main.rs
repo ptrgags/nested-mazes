@@ -2,13 +2,25 @@ mod dfs;
 mod direction;
 mod grid;
 mod grid_coords;
+mod tile;
 
+use crate::tile::Tile;
 use crate::grid::Grid;
 use crate::dfs::DFSMaze;
 use crate::grid_coords::GRID_SIZE;
 use crate::direction::Direction;
 
 fn main() {
+    let mut maze_gen = DFSMaze::new();
+    let root = Tile::make_root(&mut maze_gen);
+
+    let [sw, se, nw, ne] = root.subdivide(&mut maze_gen);
+
+    println!("{:?}", root.grid);
+    println!("{:?}{:?}", nw.grid, sw.grid);
+}
+
+fn old_main() {
     let mut grid = Grid::new();
     grid.mark_boundaries();
 
