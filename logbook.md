@@ -10,3 +10,26 @@ Next steps:
 * Compute the solution path
 * Generate a glTF with the results as a feature ID texture 
   (via `EXT_mesh_features`)
+
+## 2022-05-23 Productive Weekend
+
+This weekend and this morning I got a few more parts
+of this done:
+
+* Generated a PNG image for the feature ID texture. I manually made a glTF for 
+  testing
+* Tried making a shader to visualize the results. It's working, though I'm 
+  getting seam artifacts. I need to learn more about texture atlasing
+* Subdivided a parent tile into 4 children and propagated walls and boundary
+  conditions. not 100% tested, but I need tileset output to see for sure. I
+  also need to make a method to recursively subdivide until a given level.
+* Started working on glTF output. I have a function to generate the geometry
+  buffer, the next step is generating the GLB files. I started working on the
+  JSON part but still have to compute the buffer offsets and such.
+
+Next steps:
+
+* Generate GLB files
+* Generate an implicit tileset JSON
+* Generate solution path
+* Make a viewer in CesiumJS
