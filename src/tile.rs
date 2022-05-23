@@ -1,3 +1,6 @@
+use chrono::{Datelike, Utc};
+use serde_json::json;
+
 use crate::grid::Grid;
 use crate::direction::Direction;
 use crate::grid_coords::GRID_SIZE;
@@ -120,4 +123,88 @@ impl Tile {
 
         result
     }
+
+    pub fn make_gltf_json(&self) -> serde_json::Value {
+        json!({
+            "asset": {
+                "version": "2.0",
+                "generator": "Nested mazes generator from https://github.com/ptrgags/nested-mazes",
+                "copyright": format!("© {} Peter Gagliardi", Utc::now().year())
+            },
+            "extensionsUsed": ["EXT_mesh_features"],
+            "scene": 0,
+            "scenes": [
+                {
+                    "name": "Scene",
+                    "nodes": [
+                        0
+                    ]
+                }
+            ],
+            "nodes": [
+                {
+                    "mesh": 0,
+                    "name": "Maze Quad"
+                }
+            ],
+            "meshes": [
+                {
+                    "name": "Maze Quad",
+                    "primitives": [
+                        {
+                            "attributes": {
+                                "POSITION": 0,
+                                "TEXCOORD_0": 1,
+                                "NORMAL": 2
+                            },
+                            "indices": 3,
+                            "extensions": {
+                                "featureIds": [
+                                    {
+                                        "featureCount": 16,
+                                        "label": "connections",
+                                        "texture": {
+                                            "index": 0,
+                                            "texCoord": 0,
+                                            "channels": [0]
+                                        }
+                                    },
+                                    {
+                                        "featureCount": 16,
+                                        "label": "solutions",
+                                        "texture": {
+                                            "index": 0,
+                                            "texCoord": 0,
+                                            "channels": [1]
+                                        }
+                                    }
+                                ]
+                            }
+                        }
+                    ]
+                }
+            ],
+            "textures": [
+                {
+                    "sampler": 0,
+                    "source": 0
+                }
+            ],
+            "samplers": [
+                {
+                    "magFilter": 9728,
+                    "minFilter": 9728
+                }
+            ],
+            "images": [
+                {
+                    "name": "Feature ID Texture",
+                    "bufferView": 4,
+                    "mimeType": "image/png"
+                }
+            ]
+        })
+        // TODO: accessors, bufferViews, buffers
+    }
+
 }

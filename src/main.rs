@@ -1,14 +1,19 @@
 mod dfs;
 mod direction;
+mod geometry;
 mod grid;
 mod grid_coords;
 mod tile;
+
+use std::fs::File;
+use std::io::prelude::*;
 
 use crate::tile::Tile;
 use crate::grid::Grid;
 use crate::dfs::DFSMaze;
 use crate::grid_coords::GRID_SIZE;
 use crate::direction::Direction;
+use crate::geometry::make_buffer;
 
 fn main() {
     let mut maze_gen = DFSMaze::new();
@@ -16,8 +21,16 @@ fn main() {
 
     let [sw, se, nw, ne] = root.subdivide(&mut maze_gen);
 
+    let geometry_data = make_buffer();
+    let mut geometry_file = File::create("output/geometry.bin")
+        .expect("Could not open output/geometry.bin");
+    geometry_file.write_all(&geometry_data)
+        .expect("Could not write output/geometry.bin");
+
     println!("{:?}", root.grid);
     println!("{:?}{:?}", nw.grid, sw.grid);
+
+    println!("{}", se.make_gltf_json());
 }
 
 fn old_main() {

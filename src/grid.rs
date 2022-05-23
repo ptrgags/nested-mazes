@@ -10,7 +10,6 @@ use crate::direction::Direction;
 const CELL_COUNT: usize = GRID_SIZE * GRID_SIZE;
 const HALF_GRID_SIZE: usize = GRID_SIZE / 2;
 
-
 // RGB image
 const IMAGE_SIZE: usize = CELL_COUNT * 3;
 
