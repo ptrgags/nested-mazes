@@ -8,6 +8,7 @@ use crate::grid_coords::{GridCoords, GRID_SIZE};
 use crate::direction::Direction;
 
 const CELL_COUNT: usize = GRID_SIZE * GRID_SIZE;
+const HALF_GRID_SIZE: usize = GRID_SIZE / 2;
 
 
 // RGB image
@@ -227,7 +228,127 @@ impl Grid {
         left: &[Connection],
         bottom: &[Connection],
     ) {
-        // TODO: implement me!
+        self.set_horizontal_boundary(0, bottom, Direction::Down);
+        self.set_horizontal_boundary(GRID_SIZE - 1, top, Direction::Up);
+
+        self.set_vertical_boundary(0, left, Direction::Left);
+        self.set_vertical_boundary(GRID_SIZE - 1, right, Direction::Right);
+    }
+
+    fn set_horizontal_boundary(
+        &mut self, 
+        y: usize,
+        boundary: &[Connection],
+        direction: Direction
+    ) {
+        let row_offset = y * GRID_SIZE;
+        let direction_index = direction.to_index();
+        for x in 0..HALF_GRID_SIZE {
+            let connection = boundary[x];
+
+            let child_x = 2 * x;
+
+            // Each connection subdivides into two connections in the child
+            // which has twice the resolution.
+            let a_index = row_offset + child_x;
+            let b_index = row_offset + (child_x + 1);
+
+            // If it was a wall in the parent, then both halves are a wall
+            // in the child
+            if connection.blocked {
+                self.cells[a_index].connections[direction_index].blocked = true;
+                self.cells[b_index].connections[direction_index].blocked = true;
+                continue;
+            }
+
+            // The split bits determine where exactly the connection is
+            let split_bit = connection.split_bits & 1;
+            let other_half = (!split_bit) & 1;
+            let remaining_bits = connection.split_bits >> 1;
+
+            let split_index = row_offset + (child_x + split_bit as usize);
+            let other_index = row_offset + (child_x + other_half as usize);
+
+            {
+                // Propagate the connection wherever the split bit indicated
+                let split_connection = &mut self.cells[split_index]
+                    .connections[direction_index];
+                split_connection.connected = connection.connected;
+                split_connection.is_solution_connection = connection.is_solution_connection;
+                split_connection.is_maze_exit = connection.is_maze_exit;
+
+                // for further subdivision
+                split_connection.split_bits = remaining_bits;
+            }
+
+            {
+                // The other half will be blocked
+                let other_connection = &mut self.cells[other_index]
+                    .connections[direction_index];
+                other_connection.connected = false;
+                other_connection.blocked = false;
+                other_connection.is_solution_connection = false;
+                other_connection.is_maze_exit = false;
+                other_connection.split_bits = 0;
+            }
+        }
+    }
+
+    fn set_vertical_boundary(
+        &mut self, 
+        x: usize,
+        boundary: &[Connection],
+        direction: Direction
+    ) {
+        let direction_index = direction.to_index();
+        for y in 0..HALF_GRID_SIZE {
+            let connection = boundary[y];
+
+            let child_y = 2 * y;
+
+            // Each connection subdivides into two connections in the child
+            // which has twice the resolution.
+            let a_index = child_y * GRID_SIZE + x;
+            let b_index = (child_y + 1) * GRID_SIZE + x;
+
+            // If it was a wall in the parent, then both halves are a wall
+            // in the child
+            if connection.blocked {
+                self.cells[a_index].connections[direction_index].blocked = true;
+                self.cells[b_index].connections[direction_index].blocked = true;
+                continue;
+            }
+
+            // The split bits determine where exactly the connection is
+            let split_bit = connection.split_bits & 1;
+            let other_half = (!split_bit) & 1;
+            let remaining_bits = connection.split_bits >> 1;
+
+            let split_index = (child_y + split_bit as usize) * GRID_SIZE + x;
+            let other_index = (child_y + other_half as usize) * GRID_SIZE + x;
+            {
+                // Propagate the connection wherever the split bit indicated
+                let split_connection = &mut self.cells[split_index]
+                    .connections[direction_index];
+                split_connection.connected = connection.connected;
+                split_connection.is_solution_connection = connection.is_solution_connection;
+                split_connection.is_maze_exit = connection.is_maze_exit;
+
+                // for further subdivision
+                split_connection.split_bits = remaining_bits;
+            }
+
+            {
+                // The other half will be blocked
+                let other_connection = &mut self.cells[other_index]
+                    .connections[direction_index];
+                other_connection.connected = false;
+                other_connection.blocked = false;
+                other_connection.is_solution_connection = false;
+                other_connection.is_maze_exit = false;
+                other_connection.split_bits = 0;
+            }
+        }
     }
 
     pub fn propagate_interior(
