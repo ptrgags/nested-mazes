@@ -124,6 +124,36 @@ impl Tile {
         result
     }
 
+    pub fn filename(&self) -> String {
+        format!("tiles/{}.{}.{}.glb", self.level, self.x, self.y)
+    }
+
+    pub fn matrix(&self) -> [f64; 16] {
+        // level 0: 1
+        // level 2: 1/2
+        // level 3: 1/4
+        let s = (0.5f64).powi(self.level as i32);
+
+        let tile_width = 2.0 / s;
+        let dx = (self.x as f64) * tile_width;
+        // the +y direction is really -z in glTF's coordinate system
+        let dz = -(self.y as f64) * tile_width;
+
+        // TODO: compute this given the level
+        let offset_x = 0.0;
+        let offset_z = 0.0;
+
+        let tx = offset_x + dx;
+        let tz = offset_z + dz;
+
+        [
+            s, 0.0, 0.0, 0.0,
+            0.0, s, 0.0, 0.0,
+            0.0, 0.0, s, 0.0,
+            tx, 0.0, tz, 0.0
+        ]
+    }
+
     pub fn make_gltf_json(&self) -> serde_json::Value {
         json!({
             "asset": {
@@ -144,7 +174,8 @@ impl Tile {
             "nodes": [
                 {
                     "mesh": 0,
-                    "name": "Maze Quad"
+                    "name": "Maze Quad",
+                    "matrix": self.matrix()
                 }
             ],
             "meshes": [
@@ -202,9 +233,82 @@ impl Tile {
                     "bufferView": 4,
                     "mimeType": "image/png"
                 }
+            ],
+            "accessors": [
+                {
+                    "name": "Position",
+                    "bufferView": 0,
+                    "type": "VEC3",
+                    "componentType": 5126,
+                    "count": 4,
+                    "max": [1, 0, 1],
+                    "min": [-1, 0, -1]
+                },
+                {
+                    "name": "UVs",
+                    "bufferView": 1,
+                    "type": "VEC2",
+                    "componentType": 5126,
+                    "count": 4,
+                },
+                {
+                    "name": "Normals",
+                    "bufferView": 2,
+                    "type": "VEC3",
+                    "componentType": 5126,
+                    "count": 4,
+                },
+                {
+                    "name": "Indices",
+                    "bufferView": 3,
+                    "type": "SCALAR",
+                    "componentType": 5123,
+                    "count": 6
+                }
+            ],
+            "bufferViews": [
+                {
+                    "name": "Position",
+                    "buffer": 1,
+                    "byteOffset": 0,
+                    "byteLength": 48
+                },
+                {
+                    "name": "UVs",
+                    "buffer": 1,
+                    "byteOffset": 48,
+                    "byteLength": 32
+                },
+                {
+                    "name": "Normals",
+                    "buffer": 1,
+                    "byteOffset": 48 + 32,
+                    "byteLength": 48
+                },
+                {
+                    "name": "Indices",
+                    "buffer": 1,
+                    "byteOffset": 48 + 32 + 48,
+                    "byteLength": 6
+                },
+                {
+                    "name": "Feature ID Texture",
+                    "buffer": 0,
+                    "byteOffset": 0,
+                    "byteLength": 0, // TODO: how to compute?
+                }
+            ],
+            "buffers": [
+                {
+                    "name": "Binary Chunk",
+                    "byteLength": 0 // TODO: how to get PNG length?
+                },
+                {
+                    "name": "Shared Geometry",
+                    "byteLength": 0, // TODO
+                    "uri": "geometry.bin"
+                },
             ]
         })
-        // TODO: accessors, bufferViews, buffers
     }
-
 }

@@ -5,7 +5,7 @@ mod grid;
 mod grid_coords;
 mod tile;
 
-use std::fs::File;
+use std::fs::{File, create_dir_all, copy};
 use std::io::prelude::*;
 
 use crate::tile::Tile;
@@ -21,11 +21,20 @@ fn main() {
 
     let [sw, se, nw, ne] = root.subdivide(&mut maze_gen);
 
+    println!("{}, {}, {}, {}, {}", root.filename(), sw.filename(), se.filename(), nw.filename(), ne.filename());
+
+    create_dir_all("output/maze/tiles/")
+        .expect("Could not create output directory");
+    copy("assets/subtree.json", "output/maze/0.0.0.subtree.json")
+        .expect("could not copy subtree file");
+    copy("assets/walls-test.png", "output/maze/tilesheet.png")
+        .expect("could not copy tilesheet");
+
     let geometry_data = make_buffer();
-    let mut geometry_file = File::create("output/geometry.bin")
-        .expect("Could not open output/geometry.bin");
+    let mut geometry_file = File::create("output/maze/tiles/geometry.bin")
+        .expect("Could not open output/maze/tiles/geometry.bin");
     geometry_file.write_all(&geometry_data)
-        .expect("Could not write output/geometry.bin");
+        .expect("Could not write output/mazetiles/geometry.bin");
 
     println!("{:?}", root.grid);
     println!("{:?}{:?}", nw.grid, sw.grid);

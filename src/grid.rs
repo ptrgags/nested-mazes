@@ -105,7 +105,6 @@ impl Grid {
             Some(dir) => dir,
             None => panic!("can_connect can only be called on adjacent coordinates")
         };
-        let opposite_dir = direction.get_opposite();
 
         let connection = &self.get_cell(a).connections[direction.to_index()];
         !connection.blocked
