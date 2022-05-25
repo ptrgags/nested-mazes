@@ -1,4 +1,5 @@
 use std::path::Path;
+use std::io::Cursor;
 
 use chrono::{Datelike, Utc};
 use serde_json::json;
@@ -129,6 +130,25 @@ impl Tile {
     pub fn write_glb(&self, tiles_dir: &Path) {
         let glb_path = tiles_dir.join(self.make_filename());
         println!("Generating {:?}", glb_path);
+
+        let image_buffer = self.make_image_buffer();
+        let image_length = image_buffer.len();
+
+    }
+
+    fn make_image_buffer(&self) -> Vec<u8> {
+        let mut cursor = Cursor::new(Vec::new());
+
+        image::write_buffer_with_format(
+            &mut cursor,
+            &self.grid.to_image_bytes(),
+            GRID_SIZE as u32, 
+            GRID_SIZE as u32,
+            image::ColorType::Rgb8,
+            image::ImageOutputFormat::Png
+        ).expect("could not serialize image");
+
+        cursor.into_inner()
     }
 
     fn make_filename(&self) -> String {
@@ -161,7 +181,7 @@ impl Tile {
         ]
     }
 
-    fn make_gltf_json(&self) -> serde_json::Value {
+    fn make_gltf_json(&self, image_byte_length: usize) -> serde_json::Value {
         json!({
             "asset": {
                 "version": "2.0",
@@ -302,13 +322,13 @@ impl Tile {
                     "name": "Feature ID Texture",
                     "buffer": 0,
                     "byteOffset": 0,
-                    "byteLength": 0, // TODO: how to compute?
+                    "byteLength": image_byte_length
                 }
             ],
             "buffers": [
                 {
                     "name": "Binary Chunk",
-                    "byteLength": 0 // TODO: how to get PNG length?
+                    "byteLength": image_byte_length
                 },
                 {
                     "name": "Shared Geometry",
