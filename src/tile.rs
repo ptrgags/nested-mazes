@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use chrono::{Datelike, Utc};
 use serde_json::json;
 
@@ -9,10 +11,10 @@ use crate::dfs::DFSMaze;
 const HALF_GRID_SIZE: usize = GRID_SIZE / 2;
 
 pub struct Tile {
-    level: usize,
-    x: usize,
-    y: usize,
-    pub grid: Grid,
+    pub level: usize,
+    pub x: usize,
+    pub y: usize,
+    grid: Grid,
 }
 
 impl Tile {
@@ -124,11 +126,16 @@ impl Tile {
         result
     }
 
-    pub fn filename(&self) -> String {
-        format!("tiles/{}.{}.{}.glb", self.level, self.x, self.y)
+    pub fn write_glb(&self, tiles_dir: &Path) {
+        let glb_path = tiles_dir.join(self.make_filename());
+        println!("Generating {:?}", glb_path);
     }
 
-    pub fn matrix(&self) -> [f64; 16] {
+    fn make_filename(&self) -> String {
+        format!("{}.{}.{}.glb", self.level, self.x, self.y)
+    }
+
+    fn make_matrix(&self) -> [f64; 16] {
         // level 0: 1
         // level 2: 1/2
         // level 3: 1/4
@@ -154,7 +161,7 @@ impl Tile {
         ]
     }
 
-    pub fn make_gltf_json(&self) -> serde_json::Value {
+    fn make_gltf_json(&self) -> serde_json::Value {
         json!({
             "asset": {
                 "version": "2.0",
@@ -175,7 +182,7 @@ impl Tile {
                 {
                     "mesh": 0,
                     "name": "Maze Quad",
-                    "matrix": self.matrix()
+                    "matrix": self.make_matrix()
                 }
             ],
             "meshes": [
