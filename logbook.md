@@ -33,3 +33,20 @@ Next steps:
 * Generate an implicit tileset JSON
 * Generate solution path
 * Make a viewer in CesiumJS
+
+# 2022-05-25 Getting Closer
+
+Yesterday and today, I've been chipping away at the tileset
+generation. Now I have a `Tileset` class which copies static
+files to the output directory and does a DFS to generate
+the `Tiles`. The JSON for the GLB file is nearly complete,
+but then I still need to generate the GLB binary file.
+Shouldn't be too long before I have something I can render
+in CesiumJS.
+
+Next Steps:
+
+* Figure out correct matrix translations for GLB files
+* Finish generating GLB files and tileset
+* Make a CesiumJS viewer
+* Figure out how to generate the solution paths
