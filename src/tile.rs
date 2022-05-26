@@ -1,13 +1,16 @@
-use std::path::Path;
+use std::fs::File;
 use std::io::Cursor;
+use std::io::prelude::*;
+use std::path::Path;
 
 use chrono::{Datelike, Utc};
-use serde_json::json;
+use serde_json::{json, to_string};
 
-use crate::grid::Grid;
 use crate::direction::Direction;
-use crate::grid_coords::GRID_SIZE;
 use crate::dfs::DFSMaze;
+use crate::geometry::get_buffer_size;
+use crate::grid::Grid;
+use crate::grid_coords::GRID_SIZE;
 
 const HALF_GRID_SIZE: usize = GRID_SIZE / 2;
 
@@ -103,7 +106,7 @@ impl Tile {
         // Northeast
         let mut ne = Self::new();
         ne.level = self.level + 1;
-        ne.x = self.x << 1;
+        ne.x = self.x << 1 | 1;
         ne.y = self.y << 1 | 1;
         ne.grid.set_boundary(
             // Right
@@ -132,8 +135,74 @@ impl Tile {
         println!("Generating {:?}", glb_path);
 
         let image_buffer = self.make_image_buffer();
-        let image_length = image_buffer.len();
+        let image_length = image_buffer.len() as u32;
+        let binary_padding_length = Self::get_padding_length(image_length);
+        let binary_chunk_length = image_length + binary_padding_length;
+        let binary_padding = Self::make_padding(binary_padding_length, b'\0');
+        assert!(
+            binary_chunk_length % 4 == 0,
+            "binary chunk not a multiple of 4 bytes"
+        );
 
+        let gltf_json = self.make_gltf_json(image_length);
+        let json_string = to_string(&gltf_json)
+            .expect("could not serialize glTF JSON");
+        let json_bytes = json_string.as_bytes();
+        let json_length = json_bytes.len() as u32;
+        let json_padding_length = Self::get_padding_length(json_length);
+        let json_padding = Self::make_padding(json_padding_length, b' ');
+        let json_chunk_length = json_length + json_padding_length;
+        assert!(
+            json_chunk_length % 4 == 0,
+            "json chunk not a multiple of 4 bytes"
+        );
+        
+        const HEADER_LENGTH: u32 = 12;
+        const CHUNK_HEADER_LENGTH: u32 = 8;
+        let total_length =
+            HEADER_LENGTH +
+            CHUNK_HEADER_LENGTH +
+            json_chunk_length +
+            CHUNK_HEADER_LENGTH +
+            binary_chunk_length;
+
+        const GLTF_VERSION: u32 = 2;
+
+        let mut file = File::create(glb_path).expect("Could not create file");
+        // GLB header
+        file.write_all(b"glTF").expect("Could not write magic");
+        file.write_all(&GLTF_VERSION.to_le_bytes())
+            .expect("Could not write version");
+        file.write_all(&total_length.to_le_bytes())
+            .expect("Could not write glTF length");
+        
+        // JSON chunk
+        file.write_all(&json_chunk_length.to_le_bytes())
+            .expect("Could not write JSON chunk length");
+        file.write_all(b"JSON").expect("Could not write JSON chunk magic");
+        file.write_all(&json_bytes).expect("Could not write JSON data");
+        file.write_all(&json_padding).expect("Could not write JSON padding");
+
+        // Binary chunk
+        file.write_all(&binary_chunk_length.to_le_bytes())
+            .expect("Could not write BIN chunk length");
+        file.write_all(b"BIN\0").expect("Could not write BIN chunk magic");
+        file.write_all(&image_buffer).expect("Could not write binary buffer");
+        file.write_all(&binary_padding)
+            .expect("Could not write binary padding");
+
+    }
+
+    fn get_padding_length(length: u32) -> u32 {
+        const GLB_ALIGNMENT: u32 = 4;
+        // modulo but go from [1, GLB_ALIGNMENT] instead of 
+        // [0, GLB_ALIGNMENT - 1]
+        let leftover = (length - 1) % GLB_ALIGNMENT + 1;
+        GLB_ALIGNMENT - leftover
+    }
+
+    fn make_padding(length: u32, padding_char: u8) -> Vec<u8> {
+        (0..length).map(|_| padding_char).collect()
     }
 
     fn make_image_buffer(&self) -> Vec<u8> {
@@ -181,7 +250,7 @@ impl Tile {
         ]
     }
 
-    fn make_gltf_json(&self, image_byte_length: usize) -> serde_json::Value {
+    fn make_gltf_json(&self, image_byte_length: u32) -> serde_json::Value {
         json!({
             "asset": {
                 "version": "2.0",
@@ -217,26 +286,28 @@ impl Tile {
                             },
                             "indices": 3,
                             "extensions": {
-                                "featureIds": [
-                                    {
-                                        "featureCount": 16,
-                                        "label": "connections",
-                                        "texture": {
-                                            "index": 0,
-                                            "texCoord": 0,
-                                            "channels": [0]
+                                "EXT_mesh_features": {
+                                    "featureIds": [
+                                        {
+                                            "featureCount": 16,
+                                            "label": "connections",
+                                            "texture": {
+                                                "index": 0,
+                                                "texCoord": 0,
+                                                "channels": [0]
+                                            }
+                                        },
+                                        {
+                                            "featureCount": 16,
+                                            "label": "solutions",
+                                            "texture": {
+                                                "index": 0,
+                                                "texCoord": 0,
+                                                "channels": [1]
+                                            }
                                         }
-                                    },
-                                    {
-                                        "featureCount": 16,
-                                        "label": "solutions",
-                                        "texture": {
-                                            "index": 0,
-                                            "texCoord": 0,
-                                            "channels": [1]
-                                        }
-                                    }
-                                ]
+                                    ]
+                                }
                             }
                         }
                     ]
@@ -266,7 +337,7 @@ impl Tile {
                     "name": "Position",
                     "bufferView": 0,
                     "type": "VEC3",
-                    "componentType": 5126,
+                    "componentType": 5126, // float
                     "count": 4,
                     "max": [1, 0, 1],
                     "min": [-1, 0, -1]
@@ -275,21 +346,21 @@ impl Tile {
                     "name": "UVs",
                     "bufferView": 1,
                     "type": "VEC2",
-                    "componentType": 5126,
+                    "componentType": 5126, // float
                     "count": 4,
                 },
                 {
                     "name": "Normals",
                     "bufferView": 2,
                     "type": "VEC3",
-                    "componentType": 5126,
+                    "componentType": 5126, // float
                     "count": 4,
                 },
                 {
                     "name": "Indices",
                     "bufferView": 3,
                     "type": "SCALAR",
-                    "componentType": 5123,
+                    "componentType": 5121, // unsigned byte
                     "count": 6
                 }
             ],
@@ -298,25 +369,29 @@ impl Tile {
                     "name": "Position",
                     "buffer": 1,
                     "byteOffset": 0,
-                    "byteLength": 48
+                    "byteLength": 48,
+                    "target": 34962 // array buffer
                 },
                 {
                     "name": "UVs",
                     "buffer": 1,
                     "byteOffset": 48,
-                    "byteLength": 32
+                    "byteLength": 32,
+                    "target": 34962 // array buffer
                 },
                 {
                     "name": "Normals",
                     "buffer": 1,
                     "byteOffset": 48 + 32,
-                    "byteLength": 48
+                    "byteLength": 48,
+                    "target": 34962 // array buffer
                 },
                 {
                     "name": "Indices",
                     "buffer": 1,
                     "byteOffset": 48 + 32 + 48,
-                    "byteLength": 6
+                    "byteLength": 6,
+                    "target": 34963 // element array buffer
                 },
                 {
                     "name": "Feature ID Texture",
@@ -332,7 +407,7 @@ impl Tile {
                 },
                 {
                     "name": "Shared Geometry",
-                    "byteLength": 0, // TODO
+                    "byteLength": get_buffer_size(),
                     "uri": "geometry.bin"
                 },
             ]
