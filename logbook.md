@@ -50,3 +50,15 @@ Next Steps:
 * Finish generating GLB files and tileset
 * Make a CesiumJS viewer
 * Figure out how to generate the solution paths
+
+# 2022-05-26 GLB output
+
+Today I at least got the program outputing (nearly) valid GLBs. The main thing
+left is to finish computing the matrix for each tile. Then I need to try it
+in CesiumJS and see if there's anything semantically wrong with the output.
+
+Next Steps:
+
+* Figure out correct matrix translations
+* Generate solution paths
+* Make a CesiumJS viewer
