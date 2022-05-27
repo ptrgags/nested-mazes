@@ -132,7 +132,6 @@ impl Tile {
 
     pub fn write_glb(&self, tiles_dir: &Path) {
         let glb_path = tiles_dir.join(self.make_filename());
-        println!("Generating {:?}", glb_path);
 
         let image_buffer = self.make_image_buffer();
         let image_length = image_buffer.len() as u32;
@@ -225,28 +224,43 @@ impl Tile {
     }
 
     fn make_matrix(&self) -> [f64; 16] {
-        // level 0: 1
-        // level 2: 1/2
-        // level 3: 1/4
-        let s = (0.5f64).powi(self.level as i32);
+        // 2^level = 1, 2, 4, 8, ...
+        let power_of_two = (1 << self.level) as f64;
+        // 1 / 2^level = 1, 1/2, 1/4, ...
+        let inv_power_of_two = 1.0 / power_of_two;
 
-        let tile_width = 2.0 / s;
+        // Each tile is half as small as its parent in each dimension
+        let scale = inv_power_of_two;
+
+        // The root tile goes from -1 to 1 in the x and z directions so 
+        // it has size 2. Each level is half the size of the previous one
+        let tile_width = 2.0 * inv_power_of_two;
+
+        // The first level offset is (0, 0)
+        // The second is (-1/2, 0, 1/2)
+        // The third is (-3/4, 0, 3/4)
+        // ...
+        // In general, (-(2^level - 1) / 2^level, 0, (2^level - 1) / 2^level)
+        // this distance is the term (2^level - 1) / 2^level
+        let offset_distance = (power_of_two - 1.0) * inv_power_of_two;
+
+        // Offsets are in glTF coordinates so the x coordinate increases in
+        // the +x direction and the y coordinate increases in the -z direction
+        let offset_x = -offset_distance;
+        let offset_z = offset_distance;
+        
         let dx = (self.x as f64) * tile_width;
-        // the +y direction is really -z in glTF's coordinate system
         let dz = -(self.y as f64) * tile_width;
 
-        // TODO: compute this given the level
-        let offset_x = 0.0;
-        let offset_z = 0.0;
-
         let tx = offset_x + dx;
+        let ty = 0.0;
         let tz = offset_z + dz;
 
         [
-            s, 0.0, 0.0, 0.0,
-            0.0, s, 0.0, 0.0,
-            0.0, 0.0, s, 0.0,
-            tx, 0.0, tz, 0.0
+            scale, 0.0, 0.0, 0.0,
+            0.0, scale, 0.0, 0.0,
+            0.0, 0.0, scale, 0.0,
+            tx, ty, tz, 1.0
         ]
     }
 

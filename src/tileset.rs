@@ -61,7 +61,7 @@ impl MazeTileset {
             "asset": {
                 "version": "1.1",
             },
-            "geometricError": 200,
+            "geometricError": 1 << (self.levels + 1),
             "schema": {
                 "classes": {
                     "tileset": {
@@ -83,6 +83,7 @@ impl MazeTileset {
                     "connection_tileset_uri": "tileset_connections.png"
                 }
             },
+            "refine": "REPLACE",
             "root": {
                 "boundingVolume": {
                     "box": [
@@ -92,7 +93,7 @@ impl MazeTileset {
                         0, 0, 1
                     ]
                 },
-                "geometricError": 100,
+                "geometricError": 1 << self.levels,
                 "content": {
                     "uri": "tiles/{level}.{x}.{y}.glb"
                 },
