@@ -74,3 +74,35 @@ It requires a static server to host the maze.
 
 Still not sure if I have the geometric error calculation correct, but at least
 it renders.
+
+# 2022-05-28 Maze Solver
+
+Today I implemented a DFS maze solver that works even for the subdivided tiles.
+The results look really cool! You always get a valid maze, even while loading
+more detail. See [This updated Sandcastle](https://sandcastle.cesium.com/#c=1Vdtb+I4EP4rFp/CbjaBvuze0hddD+gKCWhVaHU6IbEmMeBbx45sh76c+t9vHDvEFKq9+3bXDyR25nnmmfGM7SaCK402lDwSiS4QJ4+oSxQtsuihnAtmjaQcdwXXmHIiZ43m2YzPeFIiE8J1iXSoLpYa3jA/jpZSZD2ykoSo4NOX0xCdtELUbhm0xS7oauVjR1hL+nRSAu85XQqZTRLMSNBueSjCixoylZgrY6gigpUeC6nX9/lUXNMnkl5LnJHAKvQ1ZyIlzDrbd54VTNOcPQfgJ3QSQz8vzjBo+pSaMqKIBjqbykiBWxLlkmZU0w1REU7TwGOxj+Pe1AKDv2YcoUKyDpo11lrnnThmAoJfC6U7J1+/fI0z/EJi5yf6Uwk+a4QGRDheMDIyMfWfcgIeIWAMRFoWpLTw4i3HcZySRbGarMXjb6LgKeWrB8GKjHgYz+YbERkBcNKXUsitzeteAjKcT9Y4fVtI3UJpkdkvLk67uKqDyiFMzB8xY/UYIf2cgxzH4IphCnPR5Gp0O+zfzY96YWW7wawAY8/llDzpQhKHC7as/yLFVlGU85XLs/3L8ApIaYI1FfyaMiitzhuvo32TaNy/uutPpj4R/SkPfY+mYnltOsLXsMojrAYniYH8t7Lp6fpf5dT+Mrpaa2iTssu2nEN/NrofDwdWzFLilWlCW/LGcwd9Nx82JDlCK8iG65Z5sVHBkgls+2dO09DaJIQx+NisVtD2mLWcDob9effmfjyFNmt/jlpnvk0JNyajq9t5bzDqjyeDm/HEbEzwJTg6BUBYwprv424Hv/eH88ngj75xEbVQfIDSwfdI7h/m3f5weMC5ZWpbBVaARccxUsVCS5xohNEasyU8ctjCGRIcEZyskaIp2XM1GE/60wPeDkj4dCA433+hCNJrguo6LZcEDXpIC6QII6U2szAhwjw1xhyJ5dLs+ovnHdFbUkDijaAp4HGG4GSkSwhR2e9lBMVm7jhcjlwduIzbdQ5RC7KFPsLjFH34SSAjnNtAQCkkwmjQtvZh5Hl2k1Bl4LqW8bGqPXB0ML1u2SUBNPdYyvlXK6SMueqCEdwagms3GPC8gEJW5TNElAsYJi/ZvDqj4PzCDHYE+7JtgFKykHRFOWZWsyOJsIazaVHArSMCNV0hZDrf7QnbN9/uBr2qpn/Zdo3fbobU1GDgO/pQA+uCtYx1rZgVu7CzQaVrSbBJzSBVkbf5VV1nGRQcu/8AX5mpWoHVXQso1b/dWnYEhttdxQ99q+AggadvD+7HYc7KeYbVD+BwJXHUC9ypHu7qbEZyJwc51utDWC9poS/T4rchHBsaIcGcCWm76DhomS2mFbVt55x5xqXSHdu2tT3aty2V7ds6QKu5K6My9ORsq9B+yehTUL6HnoywTl7zfftaSlgnrBZQ9UuU0uXSbGUXqBbwan6+mwtbaV9dIRPvWmZS71/gSkN3k30RIpuKwMGaZ42wca70MyOX1ZH5K81yuHib20AQRbEmWc5AkIoXRfLDeFLbsj+Pfeh5SjeIphcH/sdACcNKwZdlwdiEvpBZ4/I8Bvs9KBSRucHebIhk+NmYrduXQzsZRdF5DMPDSC0EW2D5hvlv).
+
+|  |  |
+|--|--|
+|![Maze tiles loading](figures/several-lods.png) | ![Fully Loaded](figures/fully-loaded.png) | 
+
+If the solution path winds back and forth across a seam, a subdivided tile may
+includ multiple disjoint solution paths. Thus, I start by listing all the
+boundary connections that either are an exit or are on the solution path
+(these properties are inherited from the parent tile) keeping track of which
+ones were visited. I run the DFS multiple times until all the edges are used.
+
+I'll admit I'm starting to lose interest in this project in favor of other
+math curiosities, but there are several things that could be improved:
+
+Next Steps:
+* Try Rust threads, this algorithm is embarassingly parallel. The stack of
+  tiles in `tileset.rs` could easily be turned into a work queue.
+  [This blog article](https://poor.dev/posts/what-job-queue/) demonstrates a
+  similar concept in Rust. I've never used threads in Rust before so it would
+  be a good exercise for me.
+* Debug why the shader has seam artifacts. Is it the texture coordinates of
+  the feature IDs not having half-pixel offsets? or something else?
+* Given the high-frequency detail, the shader suffers from aliasing artifacts
+  learn how to anti-alias.
+* Make some alternate tilemaps. Try doing something more like pixel art?
+* make a proper CesiumJS viewer page.
