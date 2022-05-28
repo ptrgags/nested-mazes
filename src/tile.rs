@@ -69,15 +69,19 @@ impl Tile {
         sw.y = self.y << 1;
         sw.grid.set_boundary(
             // Right
-            &v_middle[0..4],
+            &v_middle[0..HALF_GRID_SIZE],
             // Up
-            &h_middle[0..4],
+            &h_middle[0..HALF_GRID_SIZE],
             // Left
-            &left[0..4],
+            &left[0..HALF_GRID_SIZE],
             // Down
-            &bottom[0..4]
+            &bottom[0..HALF_GRID_SIZE]
         );
-        self.grid.propagate_interior(&mut sw.grid, 0..4, 0..4);
+        self.grid.propagate_interior(
+            &mut sw.grid,
+            0..HALF_GRID_SIZE,
+            0..HALF_GRID_SIZE
+        );
 
         // Southeast
         let mut se = Self::new();
@@ -86,15 +90,19 @@ impl Tile {
         se.y = self.y << 1;
         se.grid.set_boundary(
             // Right
-            &right[0..4],
+            &right[0..HALF_GRID_SIZE],
             // Up
-            &h_middle[4..8],
+            &h_middle[HALF_GRID_SIZE..GRID_SIZE],
             // Left
-            &v_middle[0..4],
+            &v_middle[0..HALF_GRID_SIZE],
             // Down
-            &bottom[4..8]
+            &bottom[HALF_GRID_SIZE..GRID_SIZE]
         );
-        self.grid.propagate_interior(&mut se.grid, 4..8, 0..4);
+        self.grid.propagate_interior(
+            &mut se.grid, 
+            HALF_GRID_SIZE..GRID_SIZE, 
+            0..HALF_GRID_SIZE
+        );
 
         // Northwest
         let mut nw = Self::new();
@@ -103,15 +111,19 @@ impl Tile {
         nw.y = self.y << 1 | 1;
         nw.grid.set_boundary(
             // Right
-            &v_middle[4..8],
+            &v_middle[HALF_GRID_SIZE..GRID_SIZE],
             // Up
-            &top[0..4],
+            &top[0..HALF_GRID_SIZE],
             // Left
-            &left[4..8],
+            &left[HALF_GRID_SIZE..GRID_SIZE],
             // Down
-            &h_middle[0..4]
+            &h_middle[0..HALF_GRID_SIZE]
         );
-        self.grid.propagate_interior(&mut nw.grid, 0..4, 4..8);
+        self.grid.propagate_interior(
+            &mut nw.grid,
+            0..HALF_GRID_SIZE,
+            HALF_GRID_SIZE..GRID_SIZE
+        );
 
         // Northeast
         let mut ne = Self::new();
@@ -120,15 +132,19 @@ impl Tile {
         ne.y = self.y << 1 | 1;
         ne.grid.set_boundary(
             // Right
-            &right[4..8],
+            &right[HALF_GRID_SIZE..GRID_SIZE],
             // Up
-            &top[4..8],
+            &top[HALF_GRID_SIZE..GRID_SIZE],
             // Left
-            &v_middle[4..8],
+            &v_middle[HALF_GRID_SIZE..GRID_SIZE],
             // Down
-            &h_middle[4..8],
+            &h_middle[HALF_GRID_SIZE..GRID_SIZE],
         );
-        self.grid.propagate_interior(&mut ne.grid, 4..8, 4..8);
+        self.grid.propagate_interior(
+            &mut ne.grid,
+            HALF_GRID_SIZE..GRID_SIZE,
+            HALF_GRID_SIZE..GRID_SIZE
+        );
 
         let mut result = [sw, se, nw, ne];
 

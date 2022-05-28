@@ -105,4 +105,12 @@ Next Steps:
 * Given the high-frequency detail, the shader suffers from aliasing artifacts
   learn how to anti-alias.
 * Make some alternate tilemaps. Try doing something more like pixel art?
-* make a proper CesiumJS viewer page.
+* Make a proper CesiumJS viewer page.
+* The custom shader should get the tilemap URLs and grid size from the tileset
+  metadata, not hard-coded.
+
+### Addendum
+
+Before I stopped for the day, I also went through the code and fixed some
+places that were hardcoding 4 or 8 so I can change `GRID_SIZE` to a different
+power of 2. I switched it to 16, I think it looks nicer. The constant 

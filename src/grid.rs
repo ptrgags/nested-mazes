@@ -459,8 +459,8 @@ impl Grid {
 
                 // At the next level of detail, one wall becomes two adjacent
                 // walls. Both need to be marked as blocked
-                let child_x = 2 * (x % 4) + 1;
-                let child_y = 2 * (y % 4);
+                let child_x = 2 * (x % HALF_GRID_SIZE) + 1;
+                let child_y = 2 * (y % HALF_GRID_SIZE);
                 child.cells[child_y * GRID_SIZE + child_x]
                     .connections[RIGHT_INDEX].blocked = true;
                 child.cells[(child_y + 1) * GRID_SIZE + child_x]
@@ -490,8 +490,8 @@ impl Grid {
 
                 // At the next level of detail, one wall becomes two adjacent
                 // walls. Both need to be marked as blocked
-                let child_x = 2 * (x % 4);
-                let child_y = 2 * (y % 4) + 1;
+                let child_x = 2 * (x % HALF_GRID_SIZE);
+                let child_y = 2 * (y % HALF_GRID_SIZE) + 1;
                 child.cells[child_y * GRID_SIZE + child_x]
                     .connections[UP_INDEX].blocked = true;
                 child.cells[child_y * GRID_SIZE + (child_x + 1)]

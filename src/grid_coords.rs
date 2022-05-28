@@ -1,7 +1,7 @@
 use crate::direction::Direction;
 
-// Each tile is a fixed 8x8 grid
-pub const GRID_SIZE: usize = 8;
+// Each tile is a fixed NxN grid
+pub const GRID_SIZE: usize = 16;
 
 #[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
 pub struct GridCoords {
