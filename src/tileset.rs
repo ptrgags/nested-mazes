@@ -44,10 +44,14 @@ impl MazeTileset {
         copy("assets/subtree.json", subtree_file)
             .expect("could not copy subtree file");
 
-        let tileset_file = Path::new(&self.output_directory)
+        let tileset_walls = Path::new(&self.output_directory)
             .join("tileset_walls.png");
-        copy("assets/walls-test.png", tileset_file)
+        copy("assets/walls-test.png", tileset_walls)
             .expect("could not copy tileset");
+        let tileset_connections = Path::new(&self.output_directory)
+            .join("tileset_connections.png");
+        copy("assets/connections-test.png", tileset_connections)
+            .expect("could not copy connections tileset");
 
         let geometry_data = make_buffer();
         let geometry_path = Path::new(&self.output_directory)

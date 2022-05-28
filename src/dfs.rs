@@ -89,7 +89,7 @@ impl DFSSolutionFinder {
 
     pub fn solve_all_paths(&mut self, grid: &mut Grid) {
         self.visited_exits.clear();
-        // println!("{:?}", grid.get_all_exits());
+        println!("{:?}", grid.get_all_exits());
         for exit in grid.get_all_exits() {
             if self.visited_exits.contains(&exit) {
                 continue;
