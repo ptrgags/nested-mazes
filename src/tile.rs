@@ -7,7 +7,7 @@ use chrono::{Datelike, Utc};
 use serde_json::{json, to_string};
 
 use crate::direction::Direction;
-use crate::dfs::DFSMaze;
+use crate::dfs::{DFSMaze, DFSSolutionFinder};
 use crate::geometry::get_buffer_size;
 use crate::grid::Grid;
 use crate::grid_coords::GRID_SIZE;
@@ -31,25 +31,36 @@ impl Tile {
         }
     }
 
-    pub fn make_root(maze_gen: &mut DFSMaze) -> Self {
+    pub fn make_root(
+        maze_gen: &mut DFSMaze,
+        solver: &mut DFSSolutionFinder
+    ) -> Self {
         let mut root = Self::new();
         root.grid.mark_boundaries();
         root.grid.mark_exit(Direction::Down, 3);
         root.grid.mark_exit(Direction::Up, 5);
         maze_gen.maze_fill(&mut root.grid);
         maze_gen.clear();
+        solver.solve_all_paths(&mut root.grid);
 
         root
     }
 
-    pub fn subdivide(&self, maze_gen: &mut DFSMaze) -> [Self; 4] {
+    pub fn subdivide(
+        &self,
+        maze_gen: &mut DFSMaze,
+        solver: &mut DFSSolutionFinder
+    ) -> [Self; 4] {
         let bottom = self.grid.get_horizontal_seam(0, Direction::Down);
-        let h_middle = self.grid.get_horizontal_seam(HALF_GRID_SIZE, Direction::Down);
+        let h_middle = 
+            self.grid.get_horizontal_seam(HALF_GRID_SIZE, Direction::Down);
         let top = self.grid.get_horizontal_seam(GRID_SIZE - 1, Direction::Up);
         
         let left = self.grid.get_vertical_seam(0, Direction::Left);
-        let v_middle = self.grid.get_vertical_seam(HALF_GRID_SIZE, Direction::Left);
-        let right = self.grid.get_vertical_seam(GRID_SIZE - 1, Direction::Right);
+        let v_middle = 
+            self.grid.get_vertical_seam(HALF_GRID_SIZE, Direction::Left);
+        let right = 
+            self.grid.get_vertical_seam(GRID_SIZE - 1, Direction::Right);
         
         // In Morton order:
         // Southwest
@@ -125,6 +136,7 @@ impl Tile {
         for i in 0..4 {
             maze_gen.maze_fill(&mut result[i].grid);
             maze_gen.clear();
+            solver.solve_all_paths(&mut result[i].grid);
         }
 
         result

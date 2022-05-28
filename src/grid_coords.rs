@@ -3,7 +3,7 @@ use crate::direction::Direction;
 // Each tile is a fixed 8x8 grid
 pub const GRID_SIZE: usize = 8;
 
-#[derive(Copy, Clone, Eq, Hash, PartialEq)]
+#[derive(Debug, Copy, Clone, Eq, Hash, PartialEq)]
 pub struct GridCoords {
     pub x: usize,
     // using a y-up coordinate system.
@@ -13,6 +13,27 @@ pub struct GridCoords {
 impl GridCoords {
     pub fn to_index(&self) -> usize {
         self.y * GRID_SIZE + self.x
+    }
+
+    pub fn get_adjacent(&self, direction: Direction) -> Self {
+        let mut x = self.x;
+        let mut y = self.y;
+        match direction {
+            Direction::Right => {
+                x += 1;
+            },
+            Direction::Left => {
+                x -= 1;
+            },
+            Direction::Up => {
+                y += 1;
+            },
+            Direction::Down => {
+                y -= 1;
+            }
+        };
+
+        Self {x, y}
     }
 
     pub fn get_neighbors(&self) -> Vec<Self> {

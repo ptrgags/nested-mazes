@@ -3,7 +3,7 @@ use std::path::Path;
 
 use serde_json::{json, to_string_pretty};
 
-use crate::dfs::DFSMaze;
+use crate::dfs::{DFSMaze, DFSSolutionFinder};
 use crate::tile::Tile;
 use crate::geometry::make_buffer;
 
@@ -118,7 +118,8 @@ impl MazeTileset {
 
     fn generate_maze(&self) {
         let mut maze_gen = DFSMaze::new();
-        let root = Tile::make_root(&mut maze_gen);
+        let mut solver = DFSSolutionFinder::new();
+        let root = Tile::make_root(&mut maze_gen, &mut solver);
         let mut stack = vec![root];
 
         let tiles_dir = Path::new(&self.output_directory).join("tiles");
@@ -128,7 +129,7 @@ impl MazeTileset {
             tile.write_glb(&tiles_dir);
 
             if tile.level < self.levels - 1 {
-                let child_tiles = tile.subdivide(&mut maze_gen);
+                let child_tiles = tile.subdivide(&mut maze_gen, &mut solver);
 
                 // Since we're using a stack, push the tiles
                 // backwards so the DFS is more like Morton order.

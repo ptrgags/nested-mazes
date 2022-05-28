@@ -32,6 +32,10 @@ impl Connection {
             split_bits: 0
         }
     }
+
+    pub fn is_boundary_exit(&self) -> bool {
+        self.is_maze_exit || self.is_solution_connection
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -110,6 +114,16 @@ impl Grid {
         !connection.blocked
     }
 
+    pub fn is_connected(&mut self, a: GridCoords, b:GridCoords) -> bool {
+        let direction = match GridCoords::get_direction(a, b) {
+            Some(dir) => dir,
+            None => panic!("is_connected can only be called on adjacent coordinates")
+        };
+
+        let connection = &self.get_cell(a).connections[direction.to_index()];
+        connection.connected
+    }
+
     pub fn connect(&mut self, a: GridCoords, b: GridCoords) {
         let direction = match GridCoords::get_direction(a, b) {
             Some(dir) => dir,
@@ -119,6 +133,80 @@ impl Grid {
 
         self.get_cell_mut(a).connections[direction.to_index()].connected = true;
         self.get_cell_mut(b).connections[opposite_dir.to_index()].connected = true;
+    }
+
+    pub fn connect_solution(&mut self, a: GridCoords, b: GridCoords) {
+        let direction = match GridCoords::get_direction(a, b) {
+            Some(dir) => dir,
+            None => panic!("connect_solution can only be called on adjacent coordinates")
+        };
+        let opposite_dir = direction.get_opposite();
+
+        self.get_cell_mut(a).connections[direction.to_index()].is_solution_connection = true;
+        self.get_cell_mut(b).connections[opposite_dir.to_index()].is_solution_connection = true;
+    }
+
+    pub fn get_exit_directions(&self, current: GridCoords) -> Vec<Direction> {
+        let cell = self.get_cell(current);
+        let directions = [
+            Direction::Right,
+            Direction::Up,
+            Direction::Left,
+            Direction::Down
+        ];
+
+        directions
+            .into_iter()
+            .filter(|d| {
+                let connection = &cell.connections[d.to_index()];
+                // For seams between tiles, is_solution_connection
+                // acts like an exit.
+                connection.is_maze_exit || connection.is_solution_connection
+            }).collect()
+    }
+
+    pub fn get_all_exits(&self) -> Vec<(GridCoords, Direction)> {
+        let mut result = Vec::new();
+
+        for i in 0..GRID_SIZE {
+            // bottom boundary
+            let mut connection = &self.cells[i]
+                .connections[Direction::Down.to_index()];
+            
+            if connection.is_boundary_exit() {
+                result.push((GridCoords {x: i, y: 0}, Direction::Down));
+            }
+
+            // top boundary
+            connection = &self.cells[(GRID_SIZE - 1) * GRID_SIZE + i]
+                .connections[Direction::Up.to_index()];
+
+            if connection.is_boundary_exit() {
+                result.push(
+                    (GridCoords {x: i, y: GRID_SIZE - 1}, Direction::Up)
+                );
+            }
+
+            // left boundary
+            connection = &self.cells[i * GRID_SIZE]
+                .connections[Direction::Left.to_index()];
+
+            if connection.is_boundary_exit() {
+                result.push((GridCoords {x: 0, y: i}, Direction::Left));
+            }
+
+            // right boundary
+            connection = &self.cells[i * GRID_SIZE + (GRID_SIZE - 1)]
+                .connections[Direction::Right.to_index()];
+            
+            if connection.is_boundary_exit() {
+                result.push(
+                    (GridCoords {x: GRID_SIZE - 1, y: i}, Direction::Right)
+                );
+            }
+        }
+
+        result
     }
 
     pub fn to_image_bytes(&self) -> [u8; IMAGE_SIZE] {
@@ -156,7 +244,7 @@ impl Grid {
             self.cells[i]
                 .connections[Direction::Down.to_index()].blocked = true;
 
-            // bottom boundary
+            // top boundary
             self.cells[(GRID_SIZE - 1) * GRID_SIZE + i]
                 .connections[Direction::Up.to_index()].blocked = true;
 
