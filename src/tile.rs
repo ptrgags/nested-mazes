@@ -40,7 +40,6 @@ impl Tile {
         root.grid.mark_exit(Direction::Down, 3);
         root.grid.mark_exit(Direction::Up, 5);
         maze_gen.maze_fill(&mut root.grid);
-        maze_gen.clear();
         solver.solve_all_paths(&mut root.grid);
 
         root
@@ -135,7 +134,6 @@ impl Tile {
 
         for i in 0..4 {
             maze_gen.maze_fill(&mut result[i].grid);
-            maze_gen.clear();
             solver.solve_all_paths(&mut result[i].grid);
         }
 

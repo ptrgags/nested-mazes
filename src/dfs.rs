@@ -22,10 +22,6 @@ impl DFSMaze {
         }
     }
 
-    pub fn clear(&mut self) {
-        self.visited.clear();
-    }
-
     pub fn make_maze(&mut self, grid: &mut Grid, start_cell: GridCoords) {
         self.stack.clear();
         self.stack.push(start_cell);
@@ -55,6 +51,8 @@ impl DFSMaze {
     }
 
     pub fn maze_fill(&mut self, grid: &mut Grid) {
+        self.visited.clear();
+
         // we need to make a DFS forest since child tiles may have multiple
         // disjoint sections. 
         for x in 0..GRID_SIZE {
@@ -89,7 +87,7 @@ impl DFSSolutionFinder {
 
     pub fn solve_all_paths(&mut self, grid: &mut Grid) {
         self.visited_exits.clear();
-        println!("{:?}", grid.get_all_exits());
+        self.visited_cells.clear();
         for exit in grid.get_all_exits() {
             if self.visited_exits.contains(&exit) {
                 continue;

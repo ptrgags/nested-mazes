@@ -9,6 +9,6 @@ mod tileset;
 use crate::tileset::MazeTileset;
 
 fn main() {
-    let tileset = MazeTileset::new("output/maze", 2);
+    let tileset = MazeTileset::new("output/maze", 8);
     tileset.generate();
 }
