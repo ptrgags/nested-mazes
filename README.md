@@ -8,11 +8,13 @@ maze solution even while loading.
 |--|--|
 |![Maze tiles loading](figures/several-lods.png) | ![Fully Loaded](figures/fully-loaded.png) | 
 
-## Full Disclosure
+### Full Disclosure
 
-I work at Cesium, and have worked on some of the features I use in this project,
-the 3D Tiles Next extensions for glTF (`EXT_mesh_features`) and 3D Tiles 1.1
-(implicit tiling).
+This project uses [3D Tiles](https://github.com/CesiumGS/3d-tiles) and
+[CesiumJS](https://github.com/CesiumGS/cesium) I am a Cesium employee, and
+a clause in my employment contract requires me to assign any related innovations
+to the company. Thus, this project is licensed under the Apache license, and
+the copyright belongs to Cesium GS, Inc.
 
 ## Usage
 
