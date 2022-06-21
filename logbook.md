@@ -113,4 +113,9 @@ Next Steps:
 
 Before I stopped for the day, I also went through the code and fixed some
 places that were hardcoding 4 or 8 so I can change `GRID_SIZE` to a different
-power of 2. I switched it to 16, I think it looks nicer. The constant 
+power of 2. I switched it to 16, I think it looks nicer.
+
+## 2022-06-21 License clarification
+
+Today I updated the project with the Apache license and added a notice that
+the copyright is owned by Cesium GS due to a clause in my employment contract.
