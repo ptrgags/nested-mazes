@@ -119,3 +119,14 @@ power of 2. I switched it to 16, I think it looks nicer.
 
 Today I updated the project with the Apache license and added a notice that
 the copyright is owned by Cesium GS due to a clause in my employment contract.
+
+## 2022-07-06 Fixing Textures
+
+Today I finally got around to fixing the two tileset textures, both had
+a pixel or to incorrect which was causing artifacts.
+
+I also tried out the mipmap settings that are new in custom shaders in CesiumJS
+1.95, but mipmapping blurs things across tile boundaries which results in
+noticeable seams... see [this Sandcastle](https://sandcastle.cesium.com/#c=3VZRb+o2FP4rFk/hLjPQ3m1XlFarWjohQW9V6B4mpFw3ccC7jh3ZDqWd+O/32E6IgV5te5vGQ4id7/vOd06O7aRSaIM2jL5QhS6RoC/ohmpWFfh3NxctO6kb30hhCBNULTvdi6VIHS+lwjhezbkhysAdEec4V7K4pStFqY5+/OWnGH3sx2jQb7nPbLUKuTNiFNt+dMQnwXKpinlKOI0G/YBFRdVSFooIbYEaU6LNvVRm/VQu5B3b0uxOkYJG3qHlNwqFzCj3wU6DFxU3rOSvEcSJa4txWJUaGHVDScM41dSAnC8k1hCW4lKxghm2oRqTLIsCFf93frvwxOivpUCoUnyIlp21MeWw1+MSkl9LbYaf+p/6vYK80V4dB/+ppVh2YkuigjxzOrM5jbclhYiQMAEhoyrqEEG+MN6dGC9IOV+T7Pj131TayMI/qf35l6KHyA1hInkhnLdjhMxrSYeNQv0SFzCH59ezh+n4MTm7jRvshvAKwEHIBd2aStGaF+1V/0VpvCNcilVdH/8ryApEWUoMk+KOcWiJ4VHU2SkE34+vH8fzRSjE/laHfU8mmU0eZtcPyXRiJwJRRUtKzBDlhGvaTO+6NWIXN9WGdyZoaoX/WzUPfP0PK++vnK3WhomVW2n7yNNwFj/dTyfecq7Iyi5Ev3ysvyH6Yh9saHqGVlCzeuUl1UZHOZfEr8WEZbHHpJRzeNht3rNfrx65mEzHyXzyxxhW7AD3UQ8Nfsb9Cw907GqTyDyvtySYiGpx9KElx6iP3cbqCwEVFAHvh8YBUJxCwBs0vJ3dSSCkBOUm5RkcEtFdPZiIsgLX2v3HiAkJw/StSJpNCTYswqFJ/M0+W5eEVGzFBHEmLhsRTAzsZM8VHDPY0O2NlCpLmtzDIv32OLndF+moPE1ql9Z1aqIw0oeW6XdKy/KSbZ/bUl762agxlkMnQRdOMo2DBdEU2Ctoyat/wG9gunXgfbcGnPvjRjowGO97KEx97+BdgcDfCT3Mw+6ySUH0V9AwfvWd3Ub1eRAf+uxidVCDkpj1e9ygaHFo0/P3KZxbGakAzqXy7X0eQSfbdh4c9LQDO6cH2IHHnp1inbNTbE3odw9tNMDAzr4N/ZOCbSN3Hwc24rZ43e/jWytxW7DWQLNgcMbyvNIUyK2Bnb18sUe9wzcfDWlwoNvSh0e/A9bfLm9SFgsZ1bTuRSfujLR55fSq2SB/ZUUJn1r2hIgw7hlalBwM6d5zlX61kfS+7Ue9kDrK2Aax7PKdb0qUcqI1PMkrzufsjS47V6Me4E+o0EQZbLmfN1Rx8mph68HV1E9ijEc9GL7PNFLyZ6KOlL8B) for example. might work better
+to blur within the tile, not across tile seams. But I don't think I can control
+the individual mip levels :/
