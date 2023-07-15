@@ -4,6 +4,8 @@ This project generates a 3D Tiles tileset to recursively generate mazes in the g
 the interesting property that it always produces a valid
 maze solution even while loading.
 
+⚠️ ARCHIVED - Due to a Assignment of Inventions Agreement I signed when I started working at Cesium, this copyright for this project was assigned to my employer Cesium GS, Inc. This project is still open-source under the Apache 2.0 license. However, I choose not to maintain this repo anymore, and have archived it.
+
 | While loading | Fully loaded |
 |--|--|
 |![Maze tiles loading](figures/several-lods.png) | ![Fully Loaded](figures/fully-loaded.png) | 
